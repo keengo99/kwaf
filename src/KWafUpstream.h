@@ -7,7 +7,7 @@ class KWafUpstream
 {
 public:
 	KWafUpstream(KChallenge *waf_config);
-	uint32_t check(KREQUEST r, kgl_async_context *ctx);
+	KGL_RESULT check(KREQUEST r, kgl_async_context *ctx);
 	~KWafUpstream();
 private:
 	bool CheckCCKey(KREQUEST r, kgl_async_context *ctx, const char *ips, const char *cc_key, int &cc_flag);

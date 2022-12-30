@@ -34,17 +34,12 @@ static void free_ctx(void *ctx)
 	KWafUpstream *waf_ctx = (KWafUpstream *)ctx;
 	delete waf_ctx;
 }
-static uint32_t check(KREQUEST rq, kgl_async_context *ctx)
+static KGL_RESULT check(KREQUEST rq, kgl_async_context *ctx)
 {
 	KWafUpstream *waf_ctx = (KWafUpstream *)ctx->module;
 	return waf_ctx->check(rq, ctx);
 }
-static KGL_RESULT open(KREQUEST rq, kgl_async_context *ctx)
-{
-	KWafUpstream *waf_ctx = (KWafUpstream *)ctx->module;
-	return ctx->out->f->write_message(ctx->out, rq, KGL_MSG_ERROR, "never goto here",500);
-}
-uint32_t KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
+KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 {
 	char md5buf[33];
 	char ips[MAXIPLEN];
@@ -106,7 +101,7 @@ uint32_t KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 			if (CheckCCKey(r, ctx, ips, cc_key_buf, cc_flag)) {
 				xfree(cc_key_buf);
 				if (!KBIT_TEST(cc_flag, ANTICC_FIX_URL)) {
-					return KF_STATUS_REQ_FALSE|KF_STATUS_REQ_SKIP_OPEN;
+					return KGL_NEXT;
 				}
 				//再重定向一次修复url
 				ctx->out->f->write_status(ctx->out, r, 302);
@@ -118,14 +113,14 @@ uint32_t KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 				}
 				ctx->out->f->write_unknow_header(ctx->out, r, kgl_expand_string("Location"), fix_url.str().c_str(), (hlen_t)fix_url.str().size());
 				ctx->out->f->write_message(ctx->out, r, KGL_MSG_RAW,  NULL, 0);
-				return KF_STATUS_REQ_FINISHED|KF_STATUS_REQ_SKIP_OPEN;
+				return KGL_EDENIED;
 			}
 		}
 	}
 
 	if (challenge->wl && ctx->f->support_function(r, ctx->cn, KD_REQ_CHECK_WHITE_LIST, (void *)ips,(void **)&challenge->flush)==KGL_OK) {
 		//白名单
-		return KF_STATUS_REQ_FALSE|KF_STATUS_REQ_SKIP_OPEN;
+		return KGL_NEXT;
 	}
 	KStringBuf r_url;
 	KStringBuf id;
@@ -188,7 +183,7 @@ uint32_t KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	ctx->f->get_variable(r, KGL_VAR_REQUEST_METHOD, NULL, method, &method_len);
 	if (strcmp(method, "HEAD") == 0) {
 		ctx->out->f->write_message(ctx->out, r, KGL_MSG_RAW, NULL, 0);
-		return KF_STATUS_REQ_FINISHED|KF_STATUS_REQ_SKIP_OPEN;
+		return KGL_EDENIED;
 	}
 	while (buffer) {
 		buffer->process(new_request, new_url, &cc_ctx);
@@ -197,7 +192,7 @@ uint32_t KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	int bc;
 	WSABUF *buf = new_request.GetReadBuffer(&bc);
 	ctx->out->f->write_message(ctx->out, r, KGL_MSG_VECTOR, (char *)buf, bc);
-	return KF_STATUS_REQ_FINISHED|KF_STATUS_REQ_SKIP_OPEN;
+	return KGL_EDENIED;
 }
 bool KWafUpstream::CheckCCKey(KREQUEST r, kgl_async_context *ctx, const char *ips, const char *cc_key, int &cc_flag)
 {
@@ -233,12 +228,11 @@ bool KWafUpstream::CheckCCKey(KREQUEST r, kgl_async_context *ctx, const char *ip
 }
 static kgl_upstream waf_upstream = {
 	sizeof(kgl_upstream),
-	0,
+	KGL_UPSTREAM_BEFORE_CACHE,
 	"waf",
 	create_ctx,
 	free_ctx,
-	check,
-	open
+	check
 };
 void create_waf_upstream(KREQUEST r, kgl_access_context *ctx, KChallenge *c)
 {
