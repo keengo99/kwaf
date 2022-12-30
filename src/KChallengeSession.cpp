@@ -11,9 +11,9 @@ static int as_max_key = (int)time(NULL);
 int get_challenge_session_count()
 {
 	int count;
-	server_support->fiber->mutex_lock(as_lock);
+	server_support->mutex->lock(as_lock);
 	count = challeng_session_count;
-	server_support->fiber->mutex_unlock(as_lock);
+	server_support->mutex->unlock(as_lock);
 	return count;
 }
 static int anticc_session_key_cmp(void *key1, void *key2)
@@ -24,14 +24,14 @@ void init_anticc_session()
 {
 	klist_init(&as_list);
 	as_tree = rbtree_create();
-	as_lock = server_support->fiber->mutex_init(1);
+	as_lock = server_support->mutex->init(1);
 }
 int create_session_number(char *url)
 {
 	int new_flag = 0;
 	KChallengeSession *as = new KChallengeSession(url);
 	as->expire_time = time(NULL) + 60;
-	server_support->fiber->mutex_lock(as_lock);
+	server_support->mutex->lock(as_lock);
 	int key = as_max_key++;
 	as->key = key;
 	krb_node *node = rbtree_insert(as_tree, &as->key, &new_flag, anticc_session_key_cmp);
@@ -39,28 +39,28 @@ int create_session_number(char *url)
 	node->data = as;
 	klist_insert(&as_list, as);
 	challeng_session_count++;
-	server_support->fiber->mutex_unlock(as_lock);
+	server_support->mutex->unlock(as_lock);
 	return key;
 }
 int anticc_session_number(int key)
 {
 	int number = -1;
-	server_support->fiber->mutex_lock(as_lock);
+	server_support->mutex->lock(as_lock);
 	krb_node *node = rbtree_find(as_tree, &key, anticc_session_key_cmp);
 	if (node) {
 		KChallengeSession *as = (KChallengeSession *)node->data;
 		number = as->number;
 	}
-	server_support->fiber->mutex_unlock(as_lock);
+	server_support->mutex->unlock(as_lock);
 	return number;
 }
 char *anticc_session_verify(int key, int &number)
 {
 	char *url = NULL;
-	server_support->fiber->mutex_lock(as_lock);
+	server_support->mutex->lock(as_lock);
 	krb_node *node = rbtree_find(as_tree, &key, anticc_session_key_cmp);
 	if (node == NULL) {
-		server_support->fiber->mutex_unlock(as_lock);
+		server_support->mutex->unlock(as_lock);
 		return url;
 	}
 	KChallengeSession *as = (KChallengeSession *)node->data;
@@ -68,7 +68,7 @@ char *anticc_session_verify(int key, int &number)
 	rbtree_remove(as_tree, node);
 	klist_remove(as);
 	challeng_session_count--;
-	server_support->fiber->mutex_unlock(as_lock);
+	server_support->mutex->unlock(as_lock);
 	url = as->url;
 	as->url = NULL;
 	delete as;
@@ -76,7 +76,7 @@ char *anticc_session_verify(int key, int &number)
 }
 void anticc_session_flush(time_t now_time)
 {
-	server_support->fiber->mutex_lock(as_lock);
+	server_support->mutex->lock(as_lock);
 	for (;;) {
 		KChallengeSession *as = klist_head(&as_list);
 		if (as == &as_list) {
@@ -92,5 +92,5 @@ void anticc_session_flush(time_t now_time)
 		delete as;
 		challeng_session_count--;
 	}
-	server_support->fiber->mutex_unlock(as_lock);
+	server_support->mutex->unlock(as_lock);
 }
