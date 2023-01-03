@@ -232,7 +232,8 @@ static kgl_upstream waf_upstream = {
 	"waf",
 	create_ctx,
 	free_ctx,
-	check
+	check,
+	NULL
 };
 void create_waf_upstream(KREQUEST r, kgl_access_context *ctx, KChallenge *c)
 {
