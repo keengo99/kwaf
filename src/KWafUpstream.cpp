@@ -104,16 +104,20 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 					return KGL_NEXT;
 				}
 				//再重定向一次修复url
-				ctx->out->f->write_status(ctx->out, r, 302);
+				ctx->out->f->write_status(ctx->out->ctx, 302);
 				std::stringstream  fix_url;
 				
 				fix_url << path;
 				if (*param) {
 					fix_url << "?" << param;
 				}
-				ctx->out->f->write_unknow_header(ctx->out, r, kgl_expand_string("Location"), fix_url.str().c_str(), (hlen_t)fix_url.str().size());
-				ctx->out->f->write_message(ctx->out, r, KGL_MSG_RAW,  NULL, 0);
-				return KGL_EDENIED;
+				ctx->out->f->write_unknow_header(ctx->out->ctx, kgl_expand_string("Location"), fix_url.str().c_str(), (hlen_t)fix_url.str().size());
+				kgl_response_body body;
+				auto result = ctx->out->f->write_header_finish(ctx->out->ctx, 0, &body);
+				if (result != KGL_OK) {
+					return result;
+				}
+				return body.f->close(body.ctx, KGL_OK);
 			}
 		}
 	}
@@ -142,7 +146,7 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	KMD5(r_url.getString(), r_url.getSize(), md5buf);
 	id.write_all(md5buf, 32);
 	id << (INT64)now_time << "_" << seq;
-	ctx->out->f->write_status(ctx->out, r, challenge->status_code);
+	ctx->out->f->write_status(ctx->out->ctx,  challenge->status_code);
 	
 	KChallengeHeader *header = challenge->header;
 
@@ -159,20 +163,20 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	while (header) {
 		if (header->val->next == NULL && header->val->type == CC_BUFFER_STRING) {
 			assert(header->val->buf);
-			ctx->out->f->write_unknow_header(ctx->out,r, header->attr, header->attr_len, header->val->buf, header->val->len);
+			ctx->out->f->write_unknow_header(ctx->out->ctx, header->attr, header->attr_len, header->val->buf, header->val->len);
 		} else {
 			KDsoAutoBuffer tmp_buffer(NULL);
 			header->process(tmp_buffer, new_url, &cc_ctx);
 			kbuf *buf = tmp_buffer.getHead();
 			if (buf->next == NULL) {
-				ctx->out->f->write_unknow_header(ctx->out, r, header->attr, header->attr_len, buf->data, buf->used);
+				ctx->out->f->write_unknow_header(ctx->out->ctx, header->attr, header->attr_len, buf->data, buf->used);
 			} else {
 				KStringBuf val;
 				while (buf) {
 					val.write_all(buf->data, buf->used);
 					buf = buf->next;
 				}
-				ctx->out->f->write_unknow_header(ctx->out, r, header->attr, header->attr_len, val.getBuf(), val.getSize());
+				ctx->out->f->write_unknow_header(ctx->out->ctx, header->attr, header->attr_len, val.getBuf(), val.getSize());
 			}
 		}
 		header = header->next;
@@ -182,7 +186,6 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	DWORD method_len = sizeof(method) - 1;
 	ctx->f->get_variable(r, KGL_VAR_REQUEST_METHOD, NULL, method, &method_len);
 	if (strcmp(method, "HEAD") == 0) {
-		ctx->out->f->write_message(ctx->out, r, KGL_MSG_RAW, NULL, 0);
 		return KGL_EDENIED;
 	}
 	while (buffer) {
@@ -191,8 +194,12 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	}
 	int bc;
 	WSABUF *buf = new_request.GetReadBuffer(&bc);
-	ctx->out->f->write_message(ctx->out, r, KGL_MSG_VECTOR, (char *)buf, bc);
-	return KGL_EDENIED;
+	kgl_response_body body;
+	auto result = ctx->out->f->write_header_finish(ctx->out->ctx, (int64_t)new_request.getLen(), &body);
+	if (result != KGL_OK) {
+		return result;
+	}
+	return body.f->close(body.ctx, body.f->writev(body.ctx, buf,bc));
 }
 bool KWafUpstream::CheckCCKey(KREQUEST r, kgl_async_context *ctx, const char *ips, const char *cc_key, int &cc_flag)
 {
