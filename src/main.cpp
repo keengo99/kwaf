@@ -8,8 +8,7 @@ kgl_dso_version *server_support = NULL;
 void register_access(kgl_dso_version *ver);
 int waf_flush_fiber(void* arg, int got)
 {
-	for (;;) {
-		server_support->fiber->msleep(5000);
+	while(server_support->fiber->msleep(5000)==0) {
 		anticc_session_flush(time(NULL));
 	}
 	return 0;
