@@ -10,15 +10,15 @@ static void free_ctx(void *ctx)
 	KWaf *waf = (KWaf *)ctx;
 	delete waf;
 }
-static KGL_RESULT build(kgl_access_build *build_ctx, KF_ACCESS_BUILD_TYPE build_type)
+static KGL_RESULT build(kgl_access_build *build_ctx, uint32_t build_type)
 {
 	KWaf *lua = (KWaf *)build_ctx->module;
 	return lua->build(build_ctx, build_type);
 }
-static KGL_RESULT parse(kgl_access_parse *parse_ctx,KF_ACCESS_PARSE_TYPE parse_type)
+static KGL_RESULT parse(kgl_access_parse_config *parse_ctx)
 {
 	KWaf *lua = (KWaf *)parse_ctx->module;
-	return lua->parse(parse_ctx, parse_type);
+	return lua->parse(parse_ctx);
 }
 static uint32_t process(KREQUEST rq, kgl_access_context *ctx, DWORD notify)
 {
@@ -34,15 +34,15 @@ static void free_ctx_session(void *ctx)
 	KWafSession *waf = (KWafSession *)ctx;
 	delete waf;
 }
-static KGL_RESULT build_session(kgl_access_build *build_ctx, KF_ACCESS_BUILD_TYPE build_type)
+static KGL_RESULT build_session(kgl_access_build *build_ctx, uint32_t build_type)
 {
 	KWafSession *lua = (KWafSession *)build_ctx->module;
 	return lua->build(build_ctx, build_type);
 }
-static KGL_RESULT parse_session(kgl_access_parse *parse_ctx, KF_ACCESS_PARSE_TYPE parse_type)
+static KGL_RESULT parse_session(kgl_access_parse_config *parse_ctx)
 {
 	KWafSession *lua = (KWafSession *)parse_ctx->module;
-	return lua->parse(parse_ctx, parse_type);
+	return lua->parse(parse_ctx);
 }
 static uint32_t process_session(KREQUEST rq, kgl_access_context *ctx, DWORD notify)
 {
@@ -57,6 +57,7 @@ static kgl_access anti_cc_model = {
 	free_ctx,
 	build,
 	parse,
+	NULL,
 	process,
 	NULL
 };
@@ -69,6 +70,7 @@ static kgl_access anti_session_model = {
 	free_ctx_session,
 	build_session,
 	parse_session,
+	NULL,
 	process_session,
 	NULL
 };

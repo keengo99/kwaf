@@ -143,7 +143,7 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	r_url << ips;
 	r_url.write_all(waf_config.cc_salt, waf_config.cc_salt_len);
 	r_url << (INT64)now_time << "_" << seq;
-	KMD5(r_url.getString(), r_url.getSize(), md5buf);
+	KMD5(r_url.c_str(), r_url.size(), md5buf);
 	id.write_all(md5buf, 32);
 	id << (INT64)now_time << "_" << seq;
 	ctx->out->f->write_status(ctx->out->ctx,  challenge->status_code);
@@ -159,7 +159,7 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 	} else {
 		new_url << "?";
 	}
-	new_url << waf_config.cc_key << "=" << id.getString();
+	new_url << waf_config.cc_key << "=" << id.c_str();
 	while (header) {
 		if (header->val->next == NULL && header->val->type == CC_BUFFER_STRING) {
 			assert(header->val->buf);
@@ -176,7 +176,7 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 					val.write_all(buf->data, buf->used);
 					buf = buf->next;
 				}
-				ctx->out->f->write_unknow_header(ctx->out->ctx, header->attr, header->attr_len, val.getBuf(), val.getSize());
+				ctx->out->f->write_unknow_header(ctx->out->ctx, header->attr, header->attr_len, val.buf(), val.size());
 			}
 		}
 		header = header->next;
@@ -219,7 +219,7 @@ bool KWafUpstream::CheckCCKey(KREQUEST r, kgl_async_context *ctx, const char *ip
 		s << *cc_key << ips;
 		s.write_all(waf_config.cc_salt, waf_config.cc_salt_len);
 		s << cc_key + 33;
-		KMD5(s.getString(), s.getSize(), md5buf);
+		KMD5(s.c_str(), s.size(), md5buf);
 		//		printf("*********s=%s,md5=%s\n",s.str().c_str(),md5buf);
 		if (memcmp(cc_key + 1, md5buf, 32) == 0) {//是正常用户
 			//printf("这是正常用户访问\n");

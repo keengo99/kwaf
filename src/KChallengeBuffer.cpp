@@ -11,12 +11,12 @@ void KChallengeBuffer::process(KDsoAutoBuffer &new_request, KStringBuf &new_url,
 {
 	switch (type) {
 	case CC_BUFFER_URL:
-		new_request.write_all(new_url.getString(), new_url.getSize());
+		new_request.write_all(new_url.c_str(), new_url.size());
 		break;
 	case CC_BUFFER_MURL:
 	{
-		char *tbuf = new_url.getString();
-		int len = new_url.getSize();
+		const char *tbuf = new_url.c_str();
+		int len = new_url.size();
 		while (len > 0) {
 			int rand_len = ((rand() & 7) + 1);
 			int this_len = KGL_MIN(len, rand_len);
@@ -39,8 +39,8 @@ void KChallengeBuffer::process(KDsoAutoBuffer &new_request, KStringBuf &new_url,
 			break;
 		}
 		new_request << "var " << buf << "='';";
-		char *tbuf = new_url.getString();
-		int len = new_url.getSize();
+		const char *tbuf = new_url.c_str();
+		int len = new_url.size();
 		while (len > 0) {
 			new_request << buf << "=";
 			rand_space(new_request);
@@ -62,7 +62,7 @@ void KChallengeBuffer::process(KDsoAutoBuffer &new_request, KStringBuf &new_url,
 	case CC_BUFFER_SC_KEY:
 	{
 		if (ctx->img_key == -1) {
-			char *u = strdup(new_url.getString());
+			char *u = strdup(new_url.c_str());
 			ctx->img_key = create_session_number(u);
 		}
 		new_request << ctx->img_key;

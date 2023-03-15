@@ -16,7 +16,7 @@ int get_challenge_session_count()
 	server_support->mutex->unlock(as_lock);
 	return count;
 }
-static int anticc_session_key_cmp(void *key1, void *key2)
+static int anticc_session_key_cmp(const void *key1, const void *key2)
 {
 	return *(int *)key1 - *(int *)key2;
 }

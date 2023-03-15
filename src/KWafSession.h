@@ -5,14 +5,14 @@
 #include <sstream>
 class KWafSession {
 public:
-	KGL_RESULT build(kgl_access_build *build_ctx, KF_ACCESS_BUILD_TYPE build_type)
+	KGL_RESULT build(kgl_access_build *build_ctx, uint32_t build_type)
 	{
 		std::stringstream s;
 		s << get_challenge_session_count();
 		build_ctx->write_string(build_ctx->cn, s.str().c_str(), (int)s.str().size(),0);
 		return KGL_OK;
 	}
-	KGL_RESULT parse(kgl_access_parse *parse_ctx, KF_ACCESS_PARSE_TYPE parse_type)
+	KGL_RESULT parse(kgl_access_parse_config *parse_ctx)
 	{
 		return KGL_OK;
 	}
