@@ -192,8 +192,8 @@ KGL_RESULT KWafUpstream::check(KREQUEST r,kgl_async_context *ctx)
 		buffer->process(new_request, new_url, &cc_ctx);
 		buffer = buffer->next;
 	}
-	int bc;
-	WSABUF *buf = new_request.GetReadBuffer(&bc);
+	int bc = new_request.getLen();
+	auto buf = new_request.getHead();
 	kgl_response_body body;
 	auto result = ctx->out->f->write_header_finish(ctx->out->ctx, (int64_t)new_request.getLen(), &body);
 	if (result != KGL_OK) {
