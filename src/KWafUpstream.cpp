@@ -235,7 +235,7 @@ bool KWafUpstream::CheckCCKey(KREQUEST r, kgl_async_context *ctx, const char *ip
 }
 static kgl_upstream waf_upstream = {
 	sizeof(kgl_upstream),
-	KGL_UPSTREAM_BEFORE_CACHE,
+	KGL_UPSTREAM_BEFORE_CACHE|KGL_UPSTREAM_FILTER,
 	"waf",
 	create_ctx,
 	free_ctx,

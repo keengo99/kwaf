@@ -16,12 +16,13 @@ if(NOT FOUND_KSAPI_HEADER)
     message(FATAL_ERROR "cann't found ksapi.h. try cmake -DKANGLE_DIR=kangle_dir ${CMAKE_REQUIRED_INCLUDES}")
 endif()
 
-list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/khttpd/src/KHttpParser.cpp)
+#list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/khttpd/src/KHttpParser.cpp)
 list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/khttpd/src/KStream.cpp)
 list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/khttpd/src/KStringBuf.cpp)
 list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/src/KSequence.cpp)
 list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/src/kmd5.cpp)
 list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/kasync/src/krbtree.c)
+list(APPEND KWAF_SOURCE_FILES ${KANGLE_DIR}/kasync/src/kmalloc.c)
 
 set_source_files_properties(${KWAF_SOURCE_FILES} PROPERTIES LANGUAGE CXX)
 
