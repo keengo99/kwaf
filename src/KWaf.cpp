@@ -20,13 +20,10 @@ KGL_RESULT KWaf::build(kgl_access_build* build_ctx, uint32_t build_type) {
 	std::stringstream s;
 	int total_cc_model = sizeof(anti_cc_models) / sizeof(anti_cc_model);
 	switch (build_type) {
-	case 0:
+	case KF_ACCESS_BUILD_SHORT:
 		s << "request=" << request << ",second=" << second;
 		build_ctx->write_string(build_ctx->cn, s.str().c_str(), (int)s.str().size(), 0);
 		return KGL_OK;
-	default:
-		return KGL_ENOT_SUPPORT;
-#if 0
 	case KF_ACCESS_BUILD_HTML:
 		s << "request:<input name='request' size='4' value='";
 		s << request;
@@ -48,7 +45,7 @@ KGL_RESULT KWaf::build(kgl_access_build* build_ctx, uint32_t build_type) {
 			s << "checked";
 		}
 		s << ">flush";
-		s << "<br>msg:<textarea name='msg' rows='6' cols='50'>";
+		s << "<br>msg:<textarea name='_' rows='6' cols='50'>";
 		s << msg;
 		s << "</textarea>";
 		s << "<script language='javascript'>\r\n\
@@ -63,7 +60,7 @@ KGL_RESULT KWaf::build(kgl_access_build* build_ctx, uint32_t build_type) {
 		s << ");\
 			 function set_cc_model(m){\r\n\
 			 if(m==0) return;\
-			 accessaddform.msg.value=cc_model[m-1];\r\n\
+			 accessaddform._.value=cc_model[m-1];\r\n\
 			}\r\n\
 			</script>\r\n<br>\
 			preset msg:<select onchange='set_cc_model(this.options[this.selectedIndex].value)'>";
@@ -74,20 +71,8 @@ KGL_RESULT KWaf::build(kgl_access_build* build_ctx, uint32_t build_type) {
 		s << "</select>";
 		build_ctx->write_string(build_ctx->cn, s.str().c_str(), (int)s.str().size(), 0);
 		break;
-	case KF_ACCESS_BUILD_XML:
-		s << " request='" << request << "'";
-		s << " second='" << second << "'";
-		s << " wl='" << (wl ? 1 : 0) << "'";
-		s << " flush='" << (flush ? 1 : 0) << "'";
-		s << " fix_url='" << (fix_url ? 1 : 0) << "'";
-		build_ctx->write_string(build_ctx->cn, s.str().c_str(), (int)s.str().size(), 0);
-		break;
-	case KF_ACCESS_BUILD_XML_CHARACTER:
-		build_ctx->write_string(build_ctx->cn, kgl_expand_string(CDATA_START), 0);
-		build_ctx->write_string(build_ctx->cn, msg.c_str(), (int)msg.size(), 0);
-		build_ctx->write_string(build_ctx->cn, kgl_expand_string(CDATA_END), 0);
-		break;
-#endif
+	default:
+		return KGL_ENOT_SUPPORT;
 	}
 	return KGL_OK;
 }
