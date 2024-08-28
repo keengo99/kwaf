@@ -147,10 +147,10 @@ public:
 	}
 	void parse(KHttpHeader *header)
 	{
-		if (header->name_is_know) {
-			return;
-		}
-		this->attr = kgl_strndup(header->buf, header->name_len);
+		kgl_str_t result;
+		kgl_get_header_name(header, &result);
+		this->attr = kgl_strndup(result.data, result.len);
+		this->attr_len = (hlen_t)result.len;
 		KChallengeParser cc_parser;
 		char* buf = kgl_strndup(header->buf + header->val_offset, header->val_len);
 		cc_parser.parse(buf);
