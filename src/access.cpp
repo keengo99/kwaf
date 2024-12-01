@@ -58,8 +58,7 @@ static kgl_access anti_cc_model = {
 	build,
 	parse,
 	NULL,
-	process,
-	NULL
+	process
 };
 
 static kgl_access anti_session_model = {
@@ -71,8 +70,7 @@ static kgl_access anti_session_model = {
 	build_session,
 	parse_session,
 	NULL,
-	process_session,
-	NULL
+	process_session
 };
 void register_access(kgl_dso_version *ver)
 {
